@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
+<title id="title">2048轻量益智游戏结构</title><desc id="desc">键盘与触摸输入进入移动和合并逻辑，更新棋盘和分数，再渲染页面。最高分保存在当前浏览器的localStorage中。</desc>
+<defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#52627b" stroke-width="1.8"/></marker></defs>
+<rect width="1200" height="560" rx="24" fill="#f7f9fc"/>
+<g font-family="Microsoft YaHei,Arial,sans-serif" fill="#20304a">
+<text x="60" y="74" font-size="32" font-weight="700">2048轻量益智游戏</text><text x="60" y="113" font-size="18" fill="#617189">单文件静态应用 · 全部逻辑在浏览器中运行</text>
+<g stroke="#cbd5e4" stroke-width="2" fill="white"><rect x="55" y="190" width="230" height="154" rx="18"/><rect x="350" y="190" width="230" height="154" rx="18"/><rect x="645" y="190" width="230" height="154" rx="18"/><rect x="940" y="190" width="205" height="154" rx="18"/><rect x="690" y="421" width="420" height="87" rx="16"/></g>
+<g font-size="22" font-weight="700"><text x="80" y="234">事件输入</text><text x="375" y="234">移动与合并</text><text x="670" y="234">游戏状态</text><text x="965" y="234">页面呈现</text></g>
+<g font-size="18" fill="#617189"><text x="80" y="275">方向键 / WASD</text><text x="80" y="306">触摸滑动 / 重开</text><text x="375" y="275">方向转换、去零合并</text><text x="375" y="306">随机方块、胜负判断</text><text x="670" y="275">4×4棋盘、当前分数</text><text x="670" y="306">最高分、结束状态</text><text x="965" y="275">方块位置与颜色</text><text x="965" y="306">计分与状态提示</text><text x="715" y="455" font-weight="700" fill="#20304a">localStorage</text><text x="715" y="485">只保存当前浏览器最高分，不含云端同步</text></g>
+<g stroke="#52627b" stroke-width="2.5" fill="none" marker-end="url(#arrow)"><path d="M285 267 H336"/><path d="M580 267 H631"/><path d="M875 267 H926"/><path d="M760 344 V407"/></g>
+<text x="55" y="470" font-size="18" fill="#617189">index.html = HTML结构 + CSS样式 + JavaScript逻辑</text>
+</g></svg>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>2048</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'Clear Sans','Helvetica Neue',Arial,sans-serif;background:#faf8ef;color:#776e65;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;touch-action:none}
+.wrap{width:100%;max-width:420px;padding:16px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.title{font-size:46px;font-weight:bold;color:#776e65;line-height:1}
+.scores{display:flex;gap:8px}
+.score-box{background:#bbada0;border-radius:6px;padding:8px 16px;text-align:center;min-width:72px}
+.score-box .label{color:#eee4da;font-size:12px;text-transform:uppercase;letter-spacing:1px;line-height:1}
+.score-box .val{color:#fff;font-size:22px;font-weight:bold;line-height:1.2}
+.sub{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;font-size:14px;color:#776e65}
+.intro{max-width:230px;line-height:1.4}
+.btn{background:#8f7a66;color:#f9f6f2;border:none;border-radius:6px;padding:10px 18px;font-size:14px;font-weight:bold;cursor:pointer;transition:.15s}
+.btn:hover{background:#9f8b77}
+.board{position:relative;background:#bbada0;border-radius:8px;padding:10px;width:100%;aspect-ratio:1}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);gap:10px;width:100%;height:100%}
+.cell{background:rgba(238,228,218,0.35);border-radius:6px}
+.tiles{position:absolute;inset:10px}
+.tile{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:6px;font-weight:bold;transition:transform .12s ease;will-change:transform}
+.t2{background:#eee4da;color:#776e65}
+.t4{background:#ede0c8;color:#776e65}
+.t8{background:#f2b179;color:#f9f6f2}
+.t16{background:#f59563;color:#f9f6f2}
+.t32{background:#f67c5f;color:#f9f6f2}
+.t64{background:#f65e3b;color:#f9f6f2}
+.t128{background:#edcf72;color:#f9f6f2;font-size:90%}
+.t256{background:#edcc61;color:#f9f6f2;font-size:90%}
+.t512{background:#edc850;color:#f9f6f2;font-size:90%}
+.t1024{background:#edc53f;color:#f9f6f2;font-size:75%}
+.t2048{background:#edc22e;color:#f9f6f2;font-size:75%}
+.tbig{background:#3c3a32;color:#f9f6f2;font-size:70%}
+.overlay{position:absolute;inset:0;background:rgba(238,228,218,0.73);border-radius:8px;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:10}
+.overlay.show{display:flex}
+.overlay .msg{font-size:36px;font-weight:bold;color:#776e65;margin-bottom:14px}
+.overlay .msg.win{color:#edc22e}
+.overlay .btn{margin-top:4px}
+.foot{margin-top:14px;font-size:12px;color:#bbada0;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="title">2048</div>
+    <div class="scores">
+      <div class="score-box"><div class="label">分数</div><div class="val" id="score">0</div></div>
+      <div class="score-box"><div class="label">最高</div><div class="val" id="best">0</div></div>
+    </div>
+  </div>
+  <div class="sub">
+    <div class="intro">合并相同数字，得到 2048！</div>
+    <button class="btn" id="newGame">新游戏</button>
+  </div>
+  <div class="board" id="board">
+    <div class="grid" id="grid"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="overlay" id="overlay">
+      <div class="msg" id="overMsg">游戏结束</div>
+      <button class="btn" id="retry">再来一局</button>
+    </div>
+  </div>
+  <div class="foot">方向键 / WASD / 滑动操作</div>
+</div>
+<script>
+(function(){
+  var SIZE=4, board=[], score=0, best=+localStorage.getItem('best2048')||0, won=false, over=false;
+  var gridEl=document.getElementById('grid'), tilesEl=document.getElementById('tiles');
+  var scoreEl=document.getElementById('score'), bestEl=document.getElementById('best');
+  var overlay=document.getElementById('overlay'), overMsg=document.getElementById('overMsg');
+
+  function empty(){ for(var i=0;i<SIZE;i++){board[i]=[];for(var j=0;j<SIZE;j++)board[i][j]=0;} }
+  function addRandom(){
+    var cells=[];
+    for(var i=0;i<SIZE;i++)for(var j=0;j<SIZE;j++)if(!board[i][j])cells.push([i,j]);
+    if(!cells.length)return false;
+    var c=cells[Math.floor(Math.random()*cells.length)];
+    board[c[0]][c[1]]=Math.random()<0.9?2:4;
+    return true;
+  }
+  function init(){ empty();score=0;won=false;over=false;addRandom();addRandom();render();overlay.classList.remove('show'); }
+  function cls(v){ return v>2048?'tbig':'t'+v; }
+  function render(){
+    var bw=board.offsetWidth||tilesEl.clientWidth, gap=10, s=(bw-gap*(SIZE-1))/SIZE;
+    tilesEl.innerHTML='';
+    for(var i=0;i<SIZE;i++)for(var j=0;j<SIZE;j++){
+      var v=board[i][j]; if(!v)continue;
+      var t=document.createElement('div');
+      t.className='tile '+cls(v);
+      t.style.width=s+'px';t.style.height=s+'px';
+      t.style.fontSize=Math.max(14,s*0.42)+'px';
+      t.style.transform='translate('+(j*(s+gap))+'px,'+(i*(s+gap))+'px)';
+      t.textContent=v; tilesEl.appendChild(t);
+    }
+    scoreEl.textContent=score; bestEl.textContent=best;
+  }
+  function slide(row){
+    var arr=row.filter(function(x){return x;}), gained=0, merged=[];
+    for(var i=0;i<arr.length;i++){
+      if(i+1<arr.length&&arr[i]===arr[i+1]){ merged.push(arr[i]*2);gained+=arr[i]*2;i++; }
+      else merged.push(arr[i]);
+    }
+    while(merged.length<SIZE)merged.push(0);
+    return {row:merged,gained:gained};
+  }
+  function rotate(){ var n=[];for(var j=0;j<SIZE;j++){n[j]=[];for(var i=0;i<SIZE;i++)n[j][i]=board[i][SIZE-1-j];}return n; }
+  function move(dir){
+    if(over)return;
+    for(var k=0;k<dir;k++)board=rotate();
+    var moved=false;
+    for(var i=0;i<SIZE;i++){
+      var r=slide(board[i]); if(r.gained)score+=r.gained;
+      for(var j=0;j<SIZE;j++)if(board[i][j]!==r.row[j]){moved=true;}
+      board[i]=r.row;
+    }
+    for(var k=0;k<(4-dir)%4;k++)board=rotate();
+    if(moved){
+      addRandom();
+      if(score>best){best=score;localStorage.setItem('best2048',best);}
+      render();
+      if(!won){for(var i=0;i<SIZE;i++)for(var j=0;j<SIZE;j++)if(board[i][j]>=2048){won=true;showOver('胜利！',true);return;}}
+      if(!canMove()){over=true;showOver('游戏结束',false);}
+    }
+  }
+  function canMove(){
+    for(var i=0;i<SIZE;i++)for(var j=0;j<SIZE;j++){
+      if(!board[i][j])return true;
+      if(j+1<SIZE&&board[i][j]===board[i][j+1])return true;
+      if(i+1<SIZE&&board[i][j]===board[i+1][j])return true;
+    }
+    return false;
+  }
+  function showOver(msg,win){ overMsg.textContent=msg;overMsg.className='msg'+(win?' win':'');overlay.classList.add('show'); }
+
+  document.addEventListener('keydown',function(e){
+    var k=e.key;
+    if(k==='ArrowLeft'||k==='a'){move(0);e.preventDefault();}
+    else if(k==='ArrowUp'||k==='w'){move(1);e.preventDefault();}
+    else if(k==='ArrowRight'||k==='d'){move(2);e.preventDefault();}
+    else if(k==='ArrowDown'||k==='s'){move(3);e.preventDefault();}
+  });
+  var sx,sy,tx,ty;
+  var boardEl=document.getElementById('board');
+  boardEl.addEventListener('touchstart',function(e){var t=e.touches[0];sx=t.clientX;sy=t.clientY;},{passive:true});
+  boardEl.addEventListener('touchend',function(e){
+    var t=e.changedTouches[0];tx=t.clientX;ty=t.clientY;
+    var dx=tx-sx,dy=ty-sy,ax=Math.abs(dx),ay=Math.abs(dy);
+    if(Math.max(ax,ay)<24)return;
+    if(ax>ay){move(dx>0?2:0);}else{move(dy>0?3:1);}
+  },{passive:true});
+  document.getElementById('newGame').addEventListener('click',init);
+  document.getElementById('retry').addEventListener('click',init);
+  window.addEventListener('resize',render);
+
+  for(var i=0;i<SIZE*SIZE;i++){var c=document.createElement('div');c.className='cell';gridEl.appendChild(c);}
+  init();
+})();
+</script>
+</body>
+</html>
